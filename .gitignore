@@ -1,0 +1,3 @@
+*.log
+mumble-migrator
+node_modules

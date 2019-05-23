@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "experimentalDecorators": true,
+        "outDir": "mumble-migrator",
+        "lib": ["es2016"],
+        "emitDecoratorMetadata": true,
+        "sourceMap": true
+    },
+    "include": ["src/**/*"]
+}
