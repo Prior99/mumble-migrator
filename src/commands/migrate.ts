@@ -26,7 +26,7 @@ async function connectMysql(config: Partial<ConnectionOptions>) {
             ...config,
             name: "mysql",
             type: "mysql",
-            logging: true,
+            // logging: true,
         });
     } catch (err) {
         error("Unable to connect.", err);
@@ -39,7 +39,7 @@ async function connectSqlite({ filename }: Partial<ConnectionOptions>) {
         return await createConnection({
             name: "sqlite",
             type: "sqlite",
-            logging: true,
+            // logging: true,
             database: filename,
         });
     } catch (err) {
@@ -116,6 +116,7 @@ export default class extends Command {
         const channels = await this.mysql.query("select * from channels");
         await this.sqlite.query(`delete from channels`);
         await Promise.all(channels.map(async channel => {
+            info(`Migrating channel "${channel.name}`);
             await this.sqlite.query(`insert into channels(server_id, channel_id, parent_id, name, inheritacl) values(?, ?, ?, ?, ?)`, [
                 channel.server_id,
                 channel.channel_id,
@@ -155,6 +156,7 @@ export default class extends Command {
         const groups = await this.mysql.query("select * from groups");
         await this.sqlite.query(`delete from groups`);
         await Promise.all(groups.map(async group => {
+            info(`Migrating group "${group.name}`);
             await this.sqlite.query(`insert into groups(group_id, server_id, name, channel_id, inherit, inheritable) values(?, ?, ?, ?, ?, ?)`, [
                 group.group_id,
                 group.server_id,
@@ -216,6 +218,7 @@ export default class extends Command {
         const users = await this.mysql.query("select * from users");
         await this.sqlite.query(`delete from users`);
         await Promise.all(users.map(async user => {
+            info(`Migrating user "${user.name}`);
             await this.sqlite.query(`insert into users(server_id, user_id, name, pw, salt, kdfiterations, lastchannel, texture, last_active) values(?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                 user.server_id,
                 user.user_id,
@@ -279,6 +282,34 @@ export default class extends Command {
             error("Databases not ok. Terminating.");
         };
         try {
+            info("migrating Servers...");
+            await this.migrateServers();
+            info("Done.");
+        } catch (err) {
+            error("Error.", err);
+        }
+        try {
+            info("migrating Channels...");
+            await this.migrateChannels();
+            info("Done.");
+        } catch (err) {
+            error("Error.", err);
+        }
+        try {
+            info("migrating Users...");
+            await this.migrateUsers();
+            info("Done.");
+        } catch (err) {
+            error("Error.", err);
+        }
+        try {
+            info("migrating Groups...");
+            await this.migrateGroups();
+            info("Done.");
+        } catch (err) {
+            error("Error.", err);
+        }
+        try {
             info("migrating Acl...");
             await this.migrateAcl();
             info("Done.");
@@ -307,13 +338,6 @@ export default class extends Command {
             error("Error.", err);
         }
         try {
-            info("migrating Channels...");
-            await this.migrateChannels();
-            info("Done.");
-        } catch (err) {
-            error("Error.", err);
-        }
-        try {
             info("migrating Config...");
             await this.migrateConfig();
             info("Done.");
@@ -328,22 +352,8 @@ export default class extends Command {
             error("Error.", err);
         }
         try {
-            info("migrating Groups...");
-            await this.migrateGroups();
-            info("Done.");
-        } catch (err) {
-            error("Error.", err);
-        }
-        try {
             info("migrating Meta...");
             await this.migrateMeta();
-            info("Done.");
-        } catch (err) {
-            error("Error.", err);
-        }
-        try {
-            info("migrating Servers...");
-            await this.migrateServers();
             info("Done.");
         } catch (err) {
             error("Error.", err);
@@ -358,13 +368,6 @@ export default class extends Command {
         try {
             info("migrating UserInfos...");
             await this.migrateUserInfos();
-            info("Done.");
-        } catch (err) {
-            error("Error.", err);
-        }
-        try {
-            info("migrating Users...");
-            await this.migrateUsers();
             info("Done.");
         } catch (err) {
             error("Error.", err);
